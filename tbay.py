@@ -10,15 +10,23 @@ Session = sessionmaker(bind=engine)
 session = Session()
 Base = declarative_base()
 
+user_bid_table = Table('user_bid_association', Base.metadata,
+	Column('user_id', Integer, ForeignKey('users.id')),
+	Column('bids.id', Integer, ForeignKey('bids.id'))
+)
+
 class Item(Base):
 	__tablename__ = "items"
+	def __repr__(self):
+		return self.name
+
 	
 	id = Column(Integer, primary_key=True)
 	name = Column(String, nullable=False)
 	description = Column(String)
 	start_time = Column(DateTime, default=datetime.utcnow)
 	
-	seller_id = Column(Integer, ForeignKey('User.id'),)
+	seller_id = Column(Integer, ForeignKey('users.id'), nullable=False)
 	
 class User(Base):
 	__tablename__ = "users"
@@ -27,12 +35,13 @@ class User(Base):
 	username = Column(String, nullable=False)
 	password = Column(String, nullable=False)
 	
-	sellitem = relationship('Item', uselist=False, backref='User',)
+	items = relationship('Item', backref='users')
+	bids = relationship("Bid", secondary='user_bid_association', backref='users')
 		
 class Bid(Base):
 	__tablename__ = "bids"
 	id = Column(Integer, primary_key=True)
 	price = Column(Numeric, nullable=False)
-
+	item = Column(String, ForeignKey('items.name'), nullable = False)
 	
 Base.metadata.create_all(engine)
